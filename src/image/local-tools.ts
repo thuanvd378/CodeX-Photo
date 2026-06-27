@@ -118,16 +118,31 @@ export async function blurDataUrl(dataUrl: string, radius: number): Promise<stri
   return canvas.toDataURL("image/png");
 }
 
-export async function recolorDataUrl(dataUrl: string, tint: string, strength: number): Promise<string> {
+export async function recolorDataUrl(
+  dataUrl: string,
+  tint: string,
+  strength: number,
+  sourceColor?: string
+): Promise<string> {
   const image = await loadImageElement(dataUrl);
   const canvas = imageToCanvas(image);
   const context = get2d(canvas);
-  context.globalCompositeOperation = "source-atop";
-  context.globalAlpha = Math.max(0, Math.min(0.55, strength));
-  context.fillStyle = tint;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.globalAlpha = 1;
-  context.globalCompositeOperation = "source-over";
+  const targetRgb = parseCssColor(tint);
+  const sourceRgb = sourceColor ? parseCssColor(sourceColor) : null;
+
+  if (targetRgb && sourceRgb) {
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    recolorMatchingPixels(imageData.data, sourceRgb, targetRgb, Math.max(0, Math.min(1, strength)));
+    context.putImageData(imageData, 0, 0);
+  } else {
+    context.globalCompositeOperation = "source-atop";
+    context.globalAlpha = Math.max(0, Math.min(0.55, strength));
+    context.fillStyle = tint;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = "source-over";
+  }
+
   return canvas.toDataURL("image/png");
 }
 
@@ -176,6 +191,11 @@ export async function centerOnPresetDataUrl(dataUrl: string, options: CenterOnPr
   const preset = EXPORT_PRESETS.find((item) => item.id === options.preset);
   const width = preset?.width ?? image.naturalWidth;
   const height = preset?.height ?? image.naturalHeight;
+
+  if (!preset?.width && !preset?.height && options.preset === "original") {
+    return dataUrl;
+  }
+
   const background = options.background ?? preset?.background ?? "#ffffff";
   const paddingRatio = options.paddingRatio ?? 0.08;
   const availableWidth = width * (1 - paddingRatio * 2);
@@ -271,6 +291,193 @@ function get2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
     throw new Error("Canvas 2D context is not available.");
   }
   return context;
+}
+
+interface RgbColor {
+  red: number;
+  green: number;
+  blue: number;
+}
+
+interface HslColor {
+  hue: number;
+  saturation: number;
+  lightness: number;
+}
+
+const COLOR_ALIASES: Record<string, string> = {
+  red: "#dc2626",
+  do: "#dc2626",
+  green: "#16a34a",
+  xanh: "#16a34a",
+  xanh_la: "#16a34a",
+  xanh_luc: "#16a34a",
+  blue: "#2563eb",
+  xanh_duong: "#2563eb",
+  yellow: "#eab308",
+  vang: "#eab308",
+  orange: "#f97316",
+  cam: "#f97316",
+  black: "#111827",
+  den: "#111827",
+  white: "#ffffff",
+  trang: "#ffffff",
+  pink: "#ec4899",
+  hong: "#ec4899",
+  purple: "#9333ea",
+  tim: "#9333ea",
+  brown: "#92400e",
+  nau: "#92400e",
+  gray: "#6b7280",
+  grey: "#6b7280",
+  xam: "#6b7280"
+};
+
+function recolorMatchingPixels(
+  pixels: Uint8ClampedArray,
+  sourceRgb: RgbColor,
+  targetRgb: RgbColor,
+  strength: number
+): void {
+  const sourceHsl = rgbToHsl(sourceRgb);
+  const targetHsl = rgbToHsl(targetRgb);
+  const tolerance = 0.105;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] < 24) {
+      continue;
+    }
+
+    const pixelRgb = { red: pixels[index], green: pixels[index + 1], blue: pixels[index + 2] };
+    const pixelHsl = rgbToHsl(pixelRgb);
+    const hueDelta = hueDistance(pixelHsl.hue, sourceHsl.hue);
+    const rgbDelta = colorDistance(pixelRgb, sourceRgb);
+    const isCloseHue = hueDelta <= tolerance && pixelHsl.saturation > 0.12;
+    const isCloseRgb = rgbDelta <= 0.34;
+
+    if (!isCloseHue && !isCloseRgb) {
+      continue;
+    }
+
+    const hueWeight = isCloseHue ? 1 - hueDelta / tolerance : 0.45;
+    const distanceWeight = isCloseRgb ? 1 - rgbDelta / 0.34 : 0.35;
+    const weight = Math.max(hueWeight, distanceWeight) * strength;
+    const replacement = hslToRgb({
+      hue: targetHsl.hue,
+      saturation: Math.max(pixelHsl.saturation, targetHsl.saturation * 0.72),
+      lightness: pixelHsl.lightness
+    });
+
+    pixels[index] = clampByte(lerp(pixels[index], replacement.red, weight));
+    pixels[index + 1] = clampByte(lerp(pixels[index + 1], replacement.green, weight));
+    pixels[index + 2] = clampByte(lerp(pixels[index + 2], replacement.blue, weight));
+  }
+}
+
+function parseCssColor(value: string): RgbColor | null {
+  const normalized = normalizeColorName(value);
+  const aliased = COLOR_ALIASES[normalized] ?? value.trim();
+  const hex = aliased.match(/^#?([a-f0-9]{6}|[a-f0-9]{3})$/i)?.[1];
+  if (!hex) {
+    return null;
+  }
+
+  const expanded =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : hex;
+
+  return {
+    red: parseInt(expanded.slice(0, 2), 16),
+    green: parseInt(expanded.slice(2, 4), 16),
+    blue: parseInt(expanded.slice(4, 6), 16)
+  };
+}
+
+function normalizeColorName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function rgbToHsl(color: RgbColor): HslColor {
+  const red = color.red / 255;
+  const green = color.green / 255;
+  const blue = color.blue / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const lightness = (max + min) / 2;
+
+  if (max === min) {
+    return { hue: 0, saturation: 0, lightness };
+  }
+
+  const delta = max - min;
+  const saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+  let hue = 0;
+
+  if (max === red) {
+    hue = (green - blue) / delta + (green < blue ? 6 : 0);
+  } else if (max === green) {
+    hue = (blue - red) / delta + 2;
+  } else {
+    hue = (red - green) / delta + 4;
+  }
+
+  return { hue: hue / 6, saturation, lightness };
+}
+
+function hslToRgb(color: HslColor): RgbColor {
+  if (color.saturation === 0) {
+    const value = clampByte(color.lightness * 255);
+    return { red: value, green: value, blue: value };
+  }
+
+  const q =
+    color.lightness < 0.5
+      ? color.lightness * (1 + color.saturation)
+      : color.lightness + color.saturation - color.lightness * color.saturation;
+  const p = 2 * color.lightness - q;
+
+  return {
+    red: clampByte(hueToRgb(p, q, color.hue + 1 / 3) * 255),
+    green: clampByte(hueToRgb(p, q, color.hue) * 255),
+    blue: clampByte(hueToRgb(p, q, color.hue - 1 / 3) * 255)
+  };
+}
+
+function hueToRgb(p: number, q: number, t: number): number {
+  let value = t;
+  if (value < 0) value += 1;
+  if (value > 1) value -= 1;
+  if (value < 1 / 6) return p + (q - p) * 6 * value;
+  if (value < 1 / 2) return q;
+  if (value < 2 / 3) return p + (q - p) * (2 / 3 - value) * 6;
+  return p;
+}
+
+function hueDistance(left: number, right: number): number {
+  const distance = Math.abs(left - right);
+  return Math.min(distance, 1 - distance);
+}
+
+function colorDistance(left: RgbColor, right: RgbColor): number {
+  const red = (left.red - right.red) / 255;
+  const green = (left.green - right.green) / 255;
+  const blue = (left.blue - right.blue) / 255;
+  return Math.sqrt(red * red + green * green + blue * blue) / Math.sqrt(3);
+}
+
+function lerp(from: number, to: number, amount: number): number {
+  return from + (to - from) * amount;
 }
 
 function loadImageElement(dataUrl: string): Promise<HTMLImageElement> {

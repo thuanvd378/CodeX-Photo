@@ -29,7 +29,7 @@ const DEFAULT_PRESERVE: EditPlan["preserve"] = [
 ];
 
 export function createLocalEditPlan(request: PlanEditRequest): EditPlan {
-  const instruction = request.instruction.toLowerCase();
+  const instruction = `${request.instruction.toLowerCase()} ${normalizeInstruction(request.instruction)}`;
   const steps: EditStep[] = [
     {
       tool: "load_image",
@@ -85,8 +85,17 @@ export function createLocalEditPlan(request: PlanEditRequest): EditPlan {
   }
 
   if (containsAny(instruction, ["đổi màu", "doi mau", "change color", "recolor"])) {
-    steps.push({ tool: "recolor_region", target: "requested_region", parameters: { tint: "#f4f1e8", strength: 0.18 } });
-    warnings.push("Doi mau trong demo la lop phu mau nhe, khong thay the vat lieu bang AI.");
+    const colorChange = extractColorChange(instruction);
+    steps.push({
+      tool: "recolor_region",
+      target: "requested_region",
+      parameters: {
+        ...(colorChange.sourceColor ? { sourceColor: colorChange.sourceColor } : {}),
+        targetColor: colorChange.targetColor,
+        strength: colorChange.sourceColor ? 0.88 : 0.18
+      }
+    });
+    warnings.push("Doi mau trong demo dua tren vung mau gan dung, chua phai semantic edit/inpainting that.");
   }
 
   if (containsAny(instruction, ["tiktok"])) {
@@ -176,6 +185,59 @@ export async function planWithApi(options: ApiPlannerOptions): Promise<ApiResult
 
 function containsAny(value: string, needles: string[]): boolean {
   return needles.some((needle) => value.includes(needle));
+}
+
+function normalizeInstruction(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function extractColorChange(instruction: string): { sourceColor?: string; targetColor: string } {
+  const colors = [
+    { value: "red", words: ["red", "do"] },
+    { value: "green", words: ["green", "xanh la", "xanh luc"] },
+    { value: "blue", words: ["blue", "xanh duong"] },
+    { value: "yellow", words: ["yellow", "vang"] },
+    { value: "orange", words: ["orange", "cam"] },
+    { value: "black", words: ["black", "den"] },
+    { value: "white", words: ["white", "trang"] },
+    { value: "pink", words: ["pink", "hong"] },
+    { value: "purple", words: ["purple", "tim"] },
+    { value: "brown", words: ["brown", "nau"] },
+    { value: "gray", words: ["gray", "grey", "xam"] }
+  ];
+
+  const matches = colors
+    .flatMap((color) =>
+      color.words.map((word) => ({
+        color: color.value,
+        index: wordIndex(instruction, word)
+      }))
+    )
+    .filter((match) => match.index >= 0)
+    .sort((left, right) => left.index - right.index);
+
+  if (matches.length >= 2) {
+    return { sourceColor: matches[0].color, targetColor: matches[matches.length - 1].color };
+  }
+
+  if (matches.length === 1) {
+    return { targetColor: matches[0].color };
+  }
+
+  return { targetColor: "#16a34a" };
+}
+
+function wordIndex(value: string, word: string): number {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp(`(^|\\s)${escaped}(?=\\s|$)`).exec(value);
+  return match?.index ?? -1;
 }
 
 function extractJsonObject(value: string): string {

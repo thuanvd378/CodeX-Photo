@@ -21,10 +21,12 @@ export function compilePromptForImageModel(context: PromptCompileContext): strin
     "Preserve product identity, shape, geometry, logo, texture, readable text, proportions, and lighting unless explicitly asked otherwise.",
     "If editing background, keep the product unchanged.",
     "If editing color, preserve material and realistic shadows.",
+    "For color-change requests, use recolor_region with parameters sourceColor, targetColor, and strength. Example: {\"sourceColor\":\"red\",\"targetColor\":\"green\",\"strength\":0.88}.",
     "If removing objects, keep the surrounding area natural.",
     "Make the output commercially usable for Vietnamese online sellers.",
     "Avoid unrealistic elements.",
-    "Avoid changing brand labels/text unless explicitly requested."
+    "Avoid changing brand labels/text unless explicitly requested.",
+    "Do not add export_image, center_product, resize, crop, or add_padding for a pure color-change request unless the user explicitly asks for a marketplace format or new size."
   ].join("\n");
 }
 
@@ -39,6 +41,7 @@ export function createPlannerSystemPrompt(): string {
     "Use Vietnamese for explanation_vi and risk_warnings.",
     "Allowed tool names: load_image, segment_subject, detect_background, create_mask, refine_mask, replace_background, remove_object, recolor_region, adjust_brightness, adjust_contrast, adjust_exposure, adjust_saturation, adjust_temperature, sharpen, blur_background, denoise, crop, resize, rotate, add_padding, center_product, enhance_product_photo, preserve_logo_text, export_image.",
     "Allowed preserve values: product_identity, product_shape, logo, texture, text, proportions, lighting, geometry, brand_labels, realistic_shadows.",
-    "Allowed export_preset values: shopee_square, tiktok_shop, story_reels, original."
+    "Allowed export_preset values: shopee_square, tiktok_shop, story_reels, original.",
+    "For recolor_region, parameters should include sourceColor and targetColor when the user says a source and destination color."
   ].join("\n");
 }

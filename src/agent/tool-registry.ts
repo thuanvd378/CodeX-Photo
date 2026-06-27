@@ -60,17 +60,26 @@ const registry: Record<ToolCommandName, ToolExecutor> = {
     document: { ...document, currentDataUrl: await blurDataUrl(document.currentDataUrl, 1.5) },
     message: "Local demo approximated object removal with a subtle soft fill."
   }),
-  recolor_region: async (document, step) => ({
-    document: {
-      ...document,
-      currentDataUrl: await recolorDataUrl(
-        document.currentDataUrl,
-        getString(step.parameters.tint, "#f4f1e8"),
-        getNumber(step.parameters.strength, 0.15)
-      )
-    },
-    message: "Applied a local color tint approximation."
-  }),
+  recolor_region: async (document, step) => {
+    const sourceColor = getStringAny(step.parameters, ["sourceColor", "source_color", "fromColor", "from_color", "originalColor", "original_color"]);
+    const targetColor = getStringAny(step.parameters, ["targetColor", "target_color", "toColor", "to_color", "destinationColor", "destination_color", "tint", "color", "new_color"], "#16a34a");
+    const defaultStrength = sourceColor ? 0.88 : 0.18;
+
+    return {
+      document: {
+        ...document,
+        currentDataUrl: await recolorDataUrl(
+          document.currentDataUrl,
+          targetColor,
+          getNumber(step.parameters.strength, defaultStrength),
+          sourceColor
+        )
+      },
+      message: sourceColor
+        ? `Changed pixels near ${sourceColor} toward ${targetColor} while preserving image size.`
+        : "Applied a local color tint approximation."
+    };
+  },
   adjust_brightness: async (document, step) => ({
     document: {
       ...document,
@@ -212,4 +221,15 @@ function getNumber(value: unknown, fallback: number): number {
 
 function getString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getStringAny(parameters: Record<string, unknown>, keys: string[], fallback?: string): string {
+  for (const key of keys) {
+    const value = parameters[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return fallback ?? "";
 }
