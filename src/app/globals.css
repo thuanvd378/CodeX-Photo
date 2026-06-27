@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --accent: 5 122 85;
+  --accent-strong: 4 120 87;
+  --workspace: 244 247 245;
+  --panel: 255 255 255;
+  --panel-subtle: 248 250 249;
+  --border: 214 222 218;
+  --text: 24 31 28;
+  --muted: 91 105 99;
+}
+
+.dark {
+  color-scheme: dark;
+  --workspace: 18 24 22;
+  --panel: 28 36 33;
+  --panel-subtle: 35 45 41;
+  --border: 66 81 75;
+  --text: 235 241 238;
+  --muted: 160 174 168;
+}
+
+.theme-emerald {
+  --accent: 5 122 85;
+  --accent-strong: 4 120 87;
+}
+
+.theme-blue {
+  --accent: 37 99 235;
+  --accent-strong: 29 78 216;
+}
+
+.theme-violet {
+  --accent: 124 58 237;
+  --accent-strong: 109 40 217;
+}
+
+.theme-rose {
+  --accent: 225 29 72;
+  --accent-strong: 190 18 60;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: rgb(var(--workspace));
+  color: rgb(var(--text));
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.desktop-frame {
+  background:
+    linear-gradient(180deg, rgba(var(--panel), 0.94), rgba(var(--panel-subtle), 0.92)),
+    rgb(var(--workspace));
+}
+
+.checkerboard {
+  background-color: #f7f8f7;
+  background-image:
+    linear-gradient(45deg, #dfe5e2 25%, transparent 25%),
+    linear-gradient(-45deg, #dfe5e2 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #dfe5e2 75%),
+    linear-gradient(-45deg, transparent 75%, #dfe5e2 75%);
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+}
+
+.dark .checkerboard {
+  background-color: #1f2825;
+  background-image:
+    linear-gradient(45deg, #2f3c37 25%, transparent 25%),
+    linear-gradient(-45deg, #2f3c37 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2f3c37 75%),
+    linear-gradient(-45deg, transparent 75%, #2f3c37 75%);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
