@@ -1,0 +1,51 @@
+<svg width="1280" height="560" viewBox="0 0 1280 560" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">CodeX Photo architecture</title>
+  <desc id="desc">Electron main process, renderer process, agent layer and local image tools.</desc>
+  <rect width="1280" height="560" fill="#101c18"/>
+  <text x="64" y="68" fill="#f7fffb" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="800">CodeX Photo Architecture</text>
+  <text x="64" y="98" fill="#9ab9ad" font-family="Segoe UI, Arial, sans-serif" font-size="16">A secure Electron boundary separates API keys and planner calls from the renderer UI.</text>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#12b886"/>
+    </marker>
+  </defs>
+
+  <rect x="64" y="144" width="330" height="310" rx="18" fill="#162b24" stroke="#34594c" stroke-width="2"/>
+  <text x="96" y="190" fill="#75ffd1" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Renderer process</text>
+  <text x="96" y="228" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">React UI</text>
+  <text x="96" y="258" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Upload + preview</text>
+  <text x="96" y="288" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Command box</text>
+  <text x="96" y="318" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Before/after compare</text>
+  <text x="96" y="348" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">History + export</text>
+  <rect x="96" y="382" width="240" height="38" rx="10" fill="#0e3a2d"/>
+  <text x="120" y="407" fill="#baffea" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">src/components + src/app</text>
+
+  <rect x="475" y="144" width="330" height="310" rx="18" fill="#172820" stroke="#3c5f53" stroke-width="2"/>
+  <text x="507" y="190" fill="#75ffd1" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Electron main</text>
+  <text x="507" y="228" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Window lifecycle</text>
+  <text x="507" y="258" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">IPC handlers</text>
+  <text x="507" y="288" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Secure settings</text>
+  <text x="507" y="318" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Planner API call</text>
+  <text x="507" y="348" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Schema-safe response</text>
+  <rect x="507" y="382" width="240" height="38" rx="10" fill="#0e3a2d"/>
+  <text x="536" y="407" fill="#baffea" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">electron/* + src/agent</text>
+
+  <rect x="886" y="144" width="330" height="310" rx="18" fill="#162b24" stroke="#34594c" stroke-width="2"/>
+  <text x="918" y="190" fill="#75ffd1" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Image engine</text>
+  <text x="918" y="228" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Canvas raster tools</text>
+  <text x="918" y="258" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Recolor by hue/pixel</text>
+  <text x="918" y="288" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Brightness/contrast</text>
+  <text x="918" y="318" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">Resize/padding/export</text>
+  <text x="918" y="348" fill="#d9fff4" font-family="Segoe UI, Arial, sans-serif" font-size="15">History document model</text>
+  <rect x="918" y="382" width="240" height="38" rx="10" fill="#0e3a2d"/>
+  <text x="959" y="407" fill="#baffea" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">src/image + exporter</text>
+
+  <path d="M 408 298 H 461" stroke="#12b886" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="416" y="278" fill="#9fffe0" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">IPC</text>
+  <path d="M 819 298 H 872" stroke="#12b886" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="823" y="278" fill="#9fffe0" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700">validated plan</text>
+
+  <rect x="312" y="486" width="656" height="42" rx="12" fill="#0b3328" stroke="#19795c"/>
+  <text x="346" y="512" fill="#cffff1" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700">Security rule: renderer can save a key, but cannot read the raw key back.</text>
+</svg>
